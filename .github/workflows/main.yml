@@ -1,0 +1,37 @@
+name: build
+on: [push, workflow_dispatch]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: current
+      - name: Derle
+        run: |
+          set -o pipefail
+          gradle build --no-daemon --stacktrace --console=plain 2>&1 | tee build.log
+      - name: Jarlari topla
+        if: always()
+        run: |
+          mkdir -p out
+          cp build/libs/*.jar out/ 2>/dev/null || true
+          rm -f out/*sources*.jar
+          U='https://api.modrinth.com/v2/project/fabric-api/version?game_versions=%5B%221.21.11%22%5D&loaders=%5B%22fabric%22%5D'
+          URL=$(curl -s -H 'User-Agent: reign' "$U" | python3 -c "import sys,json;print(json.load(sys.stdin)[0]['files'][0]['url'])")
+          curl -sL "$URL" -o "out/$(basename $URL)"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reignfabric-MOD
+          path: out/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: build-log
+          path: build.log
