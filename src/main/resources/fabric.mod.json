@@ -1,0 +1,1 @@
+{"schemaVersion":1,"id":"reignfabric","version":"${version}","name":"Reign of Nether: Fabric","description":"RTS: lider, harita, irk, yapi, birlik.","authors":["reign"],"license":"MIT","environment":"*","entrypoints":{"main":["reign.Reign"],"client":["reign.client.Client"]},"depends":{"fabricloader":">=0.16.0","minecraft":"~1.21.11","java":">=21","fabric-api":"*"}}
