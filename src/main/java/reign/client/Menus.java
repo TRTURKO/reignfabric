@@ -3,106 +3,110 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.Text;
-import reign.Data;
-import reign.Data.*;
-import reign.client.Client.S;
+import reign.Data.Build;
+
 public final class Menus{
+ static void btn(Screen s,int x,int y,int w,int h,String t,Runnable r){
+  s.addDrawableChild(ButtonWidget.builder(Text.literal(t),b->r.run()).dimensions(x,y,w,h).build());}
+
  public static class Setup extends Screen{
-  final int tab;int page;int rev=-1;
-  static final String[] LK={"startGold","startWood","startStone","startFood","supplyCap","unitCap","minutes"};
-  static final String[] LN={"Baslangic Altin","Baslangic Odun","Baslangic Tas","Baslangic Erzak","Birlik Limiti","Adet Limiti","Sure (dk)"};
-  static final int[] LS={50,50,50,10,10,5,5};
-  static final String[] RK={"income","nodeResp","buildRad"};
-  static final String[] RN={"Gelir %","Dugum Yenilenme","Yapi Yaricapi"};
-  static final int[] RS={25,5,4};
-  static final String[] BK={"ff","pvp"};static final String[] BN={"Dost Atesi","Oyuncu PvP"};
-  public Setup(int t,int p){super(Text.literal("Reign"));tab=t;page=p;}
+  public Setup(){super(Text.literal("Reign"));}
   public boolean shouldPause(){return false;}
-  int cx(){return width/2;}
-  boolean ed(){return S.leader&&S.phase.equals("LOBBY");}
-  void btn(int x,int y,int w,String s,Runnable r,boolean a){ButtonWidget b=ButtonWidget.builder(Text.literal(s),q->r.run()).dimensions(x,y,w,16).build();b.active=a;addDrawableChild(b);}
   protected void init(){
-   rev=S.rev;int cx=cx();String[] t={"Harita & Irk","Yan Ayarlar","Oyuncular"};
-   for(int i=0;i<3;i++){int k=i;btn(cx-168+i*112,26,110,t[i],()->get().setScreen(new Setup(k,0)),tab!=i);}
-   if(tab==0){
-    cyc(56,()->map(-1),()->map(1));cyc(76,()->size(-1),()->size(1));
-    cyc(96,()->Client.send("teams "+Math.max(2,S.teams-1)),()->Client.send("teams "+Math.min(4,S.teams+1)));
-    for(int i=0;i<4;i++){int k=i;cyc(124+i*20,()->race(k,-1),()->race(k,1),ed()&&i<S.teams);}
-   }else if(tab==1){
-    for(int i=0;i<LK.length;i++)step(56+i*22,-168,LK[i],LS[i]);
-    for(int i=0;i<RK.length;i++)step(56+i*22,6,RK[i],RS[i]);
-    for(int i=0;i<BK.length;i++){String k=BK[i];btn(cx+120,56+(RK.length+i)*22,48,"Degistir",()->Client.send("set "+k+" "+!S.bool(k)),ed());}
-   }else{
-    int per=7,f=page*per;
-    for(int i=0;i<per&&f+i<S.players.size();i++){Client.PI p=S.players.get(f+i);
-     btn(cx+40,56+i*22,128,"Takim: "+Data.label(p.asg),()->{int n=p.asg+1;if(n>=S.teams)n=-2;Client.send("assign "+p.name+" "+n);},ed());}
-    btn(cx-168,56+per*22,30,"<",()->get().setScreen(new Setup(2,Math.max(0,page-1))),true);
-    btn(cx-134,56+per*22,30,">",()->get().setScreen(new Setup(2,page+1)),true);
-    btn(cx-90,56+per*22,120,"Oto Dengele",()->Client.send("balance"),ed());
-   }
-   if(S.leader)btn(cx-168,height-30,160,S.phase.equals("LOBBY")?"MACI BASLAT":"MACI BITIR",()->{Client.send(S.phase.equals("LOBBY")?"start":"stop");close();},true);
-   btn(cx+8,height-30,160,"Kapat",()->close(),true);
+   int cx=width/2,y=40;
+   String[] mid={"basin","plateau","spires","ruins"},mn={"Nether","Yayla","End","Harabe"};
+   for(int i=0;i<4;i++){String id=mid[i];btn(this,cx-160+i*82,y,78,18,mn[i],()->Client.send("map "+id));}
+   y+=26;
+   int[] sz={96,128,160};
+   for(int i=0;i<3;i++){int v=sz[i];btn(this,cx-160+i*82,y,78,18,"Boyut "+v,()->Client.send("size "+v));}
+   for(int i=2;i<=4;i++){int v=i;btn(this,cx+90+(i-2)*40,y,36,18,v+"T",()->Client.send("teams "+v));}
+   y+=28;
+   String[] rid={"humans","nether","end"},rn={"Insan","Nether","End"};
+   for(int t=0;t<4;t++){
+    int team=t;
+    addDrawableChild(ButtonWidget.builder(Text.literal("T"+(t+1)),b->{}).dimensions(cx-160,y+t*24,26,18).build());
+    for(int i=0;i<3;i++){String id=rid[i];btn(this,cx-130+i*70,y+t*24,66,18,rn[i],()->Client.send("race "+team+" "+id));}}
+   y+=104;
+   btn(this,cx-160,y,100,20,"Ayarlar",()->Client.get().setScreen(new Settings()));
+   btn(this,cx-54,y,100,20,"Oto Dengele",()->Client.send("balance"));
+   btn(this,cx+52,y,108,20,"Bilgi (sohbet)",()->Client.send("info"));
+   btn(this,cx-160,height-30,150,20,"MACI BASLAT",()->{Client.send("start");close();});
+   btn(this,cx-4,height-30,80,20,"Bitir",()->{Client.send("stop");close();});
+   btn(this,cx+82,height-30,78,20,"Kapat",()->close());
   }
-  void cyc(int y,Runnable a,Runnable b){cyc(y,a,b,ed());}
-  void cyc(int y,Runnable a,Runnable b,boolean a2){btn(cx()+100,y,20,"<",a,a2);btn(cx()+124,y,20,">",b,a2);}
-  void step(int y,int off,String k,int s){btn(cx()+off+114,y,20,"-",()->Client.send("set "+k+" "+(S.i(k)-s)),ed());btn(cx()+off+138,y,20,"+",()->Client.send("set "+k+" "+(S.i(k)+s)),ed());}
-  void map(int d){MapDef[] v=MapDef.values();int i=(MapDef.of(S.map).ordinal()+d+v.length)%v.length;Client.send("map "+v[i].id);}
-  void size(int d){int[] v={96,128,160};int i=1;for(int k=0;k<3;k++)if(v[k]==S.size)i=k;i=(i+d+3)%3;Client.send("size "+v[i]);}
-  void race(int t,int d){Race[] v=Race.values();int i=(Race.of(S.race[t]).ordinal()+d+v.length)%v.length;Client.send("race "+t+" "+v[i].id);}
-  public void tick(){if(S.rev!=rev)get().setScreen(new Setup(tab,page));}
-  public void render(DrawContext g,int mx,int my,float dt){
-   super.render(g,mx,my,dt);int cx=cx();
-   g.drawCenteredTextWithShadow(textRenderer,"REIGN OF NETHER - Komuta",cx,10,0xFFFFFF);
-   g.drawCenteredTextWithShadow(textRenderer,(S.leader?"Lidersin":"Sadece lider duzenler")+" | "+S.phase,cx,height-44,0xFFFFFF);
-   if(tab==0){row(g,60,cx-168,"Harita",MapDef.of(S.map).name);row(g,80,cx-168,"Boyut",S.size+"x"+S.size);row(g,100,cx-168,"Takim",String.valueOf(S.teams));
-    for(int i=0;i<S.teams;i++)row(g,128+i*20,cx-168,"Takim "+(i+1)+" irk",Race.of(S.race[i]).name);}
-   else if(tab==1){
-    for(int i=0;i<LK.length;i++)row(g,60+i*22,cx-168,LN[i],String.valueOf(S.i(LK[i])));
-    for(int i=0;i<RK.length;i++)row(g,60+i*22,cx+6,RN[i],String.valueOf(S.i(RK[i])));
-    for(int i=0;i<BK.length;i++)row(g,60+(RK.length+i)*22,cx+6,BN[i],S.bool(BK[i])?"Acik":"Kapali");}
-   else{int per=7,f=page*per;
-    for(int i=0;i<per&&f+i<S.players.size();i++){Client.PI p=S.players.get(f+i);
-     g.drawTextWithShadow(textRenderer,p.name,cx-168,61+i*22,0xFFFFFF);
-     g.drawTextWithShadow(textRenderer,"-> "+(p.team>=0?Data.NAME[p.team]:Data.label(p.asg)),cx-40,61+i*22,0xFFFFFF);}}
-   Client.TI t=S.me();
-   if(t!=null)g.drawCenteredTextWithShadow(textRenderer,"A:"+t.gold+" O:"+t.wood+" T:"+t.stone+" E:"+t.food+" Birlik:"+t.su+"/"+t.sc,cx,height-56,0xFFFFFF);
+  public void render(DrawContext g,int mx,int my,float d){
+   super.render(g,mx,my,d);
+   g.drawCenteredTextWithShadow(textRenderer,"REIGN - Komuta (lider)",width/2,14,0xFFFFFF);
+   g.drawCenteredTextWithShadow(textRenderer,"Harita / Boyut / Takim sayisi / Irklar",width/2,28,0xAAAAAA);
+   g.drawCenteredTextWithShadow(textRenderer,"Secimler sohbette onaylanir. Oyuncu atama: /reign assign <ad> <0-3>",width/2,height-46,0xAAAAAA);
   }
-  void row(DrawContext g,int y,int x,String a,String b){g.drawTextWithShadow(textRenderer,a,x,y,0xFFFFFF);g.drawTextWithShadow(textRenderer,b,x+150,y,0xFFFFFF);}
  }
+
+ public static class Settings extends Screen{
+  public Settings(){super(Text.literal("Ayarlar"));}
+  public boolean shouldPause(){return false;}
+  void row(int x,int y,String label,String key,int[] vals){
+   addDrawableChild(ButtonWidget.builder(Text.literal(label),b->{}).dimensions(x,y,86,16).build());
+   for(int i=0;i<vals.length;i++){int v=vals[i];btn(this,x+90+i*36,y,34,16,String.valueOf(v),()->Client.send("set "+key+" "+v));}}
+  protected void init(){
+   int cx=width/2,L=cx-230,R=cx+10,y=44;
+   row(L,y,"Altin","startGold",new int[]{100,300,600});
+   row(L,y+22,"Odun","startWood",new int[]{100,200,400});
+   row(L,y+44,"Tas","startStone",new int[]{100,150,300});
+   row(L,y+66,"Erzak","startFood",new int[]{10,20,40});
+   row(L,y+88,"Sure dk","minutes",new int[]{10,25,45});
+   row(R,y,"Erzak lim","supplyCap",new int[]{20,60,120});
+   row(R,y+22,"Adet lim","unitCap",new int[]{10,30,60});
+   row(R,y+44,"Gelir %","income",new int[]{50,100,200});
+   row(R,y+66,"Dugum sn","nodeResp",new int[]{10,25,60});
+   row(R,y+88,"Yapi cap","buildRad",new int[]{16,28,48});
+   btn(this,L,y+120,110,18,"Dost atesi AC",()->Client.send("set ff true"));
+   btn(this,L+116,y+120,110,18,"Dost atesi KAPAT",()->Client.send("set ff false"));
+   btn(this,R,y+120,100,18,"PvP AC",()->Client.send("set pvp true"));
+   btn(this,R+106,y+120,100,18,"PvP KAPAT",()->Client.send("set pvp false"));
+   btn(this,cx-80,height-30,160,20,"Geri",()->Client.get().setScreen(new Setup()));
+  }
+  public void render(DrawContext g,int mx,int my,float d){
+   super.render(g,mx,my,d);
+   g.drawCenteredTextWithShadow(textRenderer,"YAN AYARLAR",width/2,16,0xFFFFFF);
+   g.drawCenteredTextWithShadow(textRenderer,"Bir degere tikla, sunucu sohbette onaylar",width/2,28,0xAAAAAA);
+  }
+ }
+
  public static class BuildMenu extends Screen{
   public BuildMenu(){super(Text.literal("Yapi"));}
   public boolean shouldPause(){return false;}
-  protected void init(){int cx=width/2,i=0;
-   for(Build b:Build.values()){if(b==Build.CORE)continue;int c=i%3,r=i/3;
-    addDrawableChild(ButtonWidget.builder(Text.literal(b.name),q->{Client.send("build "+b.id);close();}).dimensions(cx-171+c*116,50+r*40,110,32).build());i++;}
-   addDrawableChild(ButtonWidget.builder(Text.literal("Kapat"),q->close()).dimensions(cx-60,height-28,120,20).build());}
-  public void render(DrawContext g,int mx,int my,float dt){
-   super.render(g,mx,my,dt);int cx=width/2;Client.TI t=S.me();Race r=t==null?Race.HUMANS:Race.of(t.race);
-   g.drawCenteredTextWithShadow(textRenderer,"YAPI MENUSU",cx,14,0xFFFFFF);
-   g.drawCenteredTextWithShadow(textRenderer,t==null?"Macta degilsin":"A:"+t.gold+" O:"+t.wood+" T:"+t.stone,cx,30,0xFFFFFF);
-   int i=0;
-   for(Build b:Build.values()){if(b==Build.CORE)continue;int c=i%3,rr=i/3,x=cx-171+c*116,y=50+rr*40;
-    int gg=(int)Math.round(b.gold*r.cost),ww=(int)Math.round(b.wood*r.cost),ss=(int)Math.round(b.stone*r.cost);
-    boolean ok=t!=null&&t.gold>=gg&&t.wood>=ww&&t.stone>=ss;
-    g.drawTextWithShadow(textRenderer,gg+"A "+ww+"O "+ss+"T",x+6,y+19,ok?0x55FF55:0xFF5555);
-    if(b.id.equals(S.sel))g.drawTextWithShadow(textRenderer,"*",x+98,y+4,0xFFFF55);i++;}
-   g.drawCenteredTextWithShadow(textRenderer,"Sag tik: kur | Shift+sag tik: sok | Dushman kaleye sol tik: saldir",cx,height-44,0xFFFFFF);}
+  protected void init(){
+   int cx=width/2,i=0;
+   for(Build b:Build.values()){
+    if(b==Build.CORE)continue;
+    int c=i%3,r=i/3;String id=b.id;
+    String t=b.name+" ("+b.gold+"A "+b.wood+"O "+b.stone+"T)";
+    btn(this,cx-171+c*116,44+r*30,112,26,t,()->{Client.send("build "+id);close();});i++;}
+   btn(this,cx-60,height-28,120,20,"Kapat",()->close());
+  }
+  public void render(DrawContext g,int mx,int my,float d){
+   super.render(g,mx,my,d);
+   g.drawCenteredTextWithShadow(textRenderer,"YAPI MENUSU",width/2,14,0xFFFFFF);
+   g.drawCenteredTextWithShadow(textRenderer,"Sec -> blaze rod ile zemine SAG TIK | Shift+sag tik: sok",width/2,height-44,0xAAAAAA);
+  }
  }
+
  public static class UnitMenu extends Screen{
   public UnitMenu(){super(Text.literal("Birlik"));}
   public boolean shouldPause(){return false;}
-  protected void init(){int cx=width/2;
-   for(int s=1;s<=3;s++){int k=s;addDrawableChild(ButtonWidget.builder(Text.literal("Birlik "+s+" uret"),q->Client.send("train "+k)).dimensions(cx-100,52+(s-1)*44,200,26).build());}
-   addDrawableChild(ButtonWidget.builder(Text.literal("Burayi toplanma noktasi yap"),q->{Client.send("rally");close();}).dimensions(cx-100,190,200,20).build());
-   addDrawableChild(ButtonWidget.builder(Text.literal("Kapat"),q->close()).dimensions(cx-60,height-28,120,20).build());}
-  public void render(DrawContext g,int mx,int my,float dt){
-   super.render(g,mx,my,dt);int cx=width/2;Client.TI t=S.me();Race r=t==null?Race.HUMANS:Race.of(t.race);
-   g.drawCenteredTextWithShadow(textRenderer,"BIRLIK MENUSU",cx,14,0xFFFFFF);
-   g.drawCenteredTextWithShadow(textRenderer,t==null?"Macta degilsin":r.name+" | Birlik "+t.su+"/"+t.sc+" | Kuyruk "+t.q,cx,30,0xFFFFFF);
-   for(int s=1;s<=3;s++){Unit u=Unit.of(r,s);if(u==null)continue;int y=52+(s-1)*44;
-    boolean ok=t!=null&&t.gold>=u.gold&&t.food>=u.food;
-    g.drawCenteredTextWithShadow(textRenderer,u.name,cx,y-10,0xFFFFFF);
-    g.drawCenteredTextWithShadow(textRenderer,u.gold+"A "+u.food+"E "+u.sup+" birlik | gerek: "+u.need().name,cx,y+28,ok?0x55FF55:0xFF5555);}
-   g.drawCenteredTextWithShadow(textRenderer,"Komuta Asasi sag tik = saldir-git | Shift = tum ordu",cx,height-44,0xFFFFFF);}
+  protected void init(){
+   int cx=width/2;
+   btn(this,cx-100,50,200,24,"Birlik 1 (Kale gerekir)",()->Client.send("train 1"));
+   btn(this,cx-100,80,200,24,"Birlik 2 (Kisla gerekir)",()->Client.send("train 2"));
+   btn(this,cx-100,110,200,24,"Birlik 3 (Atolye gerekir)",()->Client.send("train 3"));
+   btn(this,cx-100,146,200,20,"Burasi toplanma noktasi",()->{Client.send("rally");close();});
+   btn(this,cx-60,height-28,120,20,"Kapat",()->close());
+  }
+  public void render(DrawContext g,int mx,int my,float d){
+   super.render(g,mx,my,d);
+   g.drawCenteredTextWithShadow(textRenderer,"BIRLIK MENUSU",width/2,14,0xFFFFFF);
+   g.drawCenteredTextWithShadow(textRenderer,"Cubuk (stick) sag tik = saldir-git | Shift = tum ordu",width/2,height-44,0xAAAAAA);
+  }
  }
 }
