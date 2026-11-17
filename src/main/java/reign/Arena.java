@@ -12,7 +12,8 @@ public class Arena{
  public boolean empty(){return q.isEmpty();}
  public float pct(){return total==0?1:(float)done/total;}
  public void run(){int n=0;while(!q.isEmpty()&&n<3500){Job j=q.peekFirst();if(!w.isChunkLoaded(j.p()))break;q.pollFirst();Compat.set(w,j.p(),j.s());n++;done++;}}
- void box(int x1,int y1,int z1,int x2,int y2,int z2,BlockState s,List<BlockPos> o){for(int x=x1;x<=x2;x++)for(int y=y1;y<=y2;y++)for(int z=z1;z<=z2;z++){BlockPos p=new BlockPos(x,y,z);put(p,s);if(o!=null)o.add(p);}}
+ void box(int x1,int y1,int z1,int x2,int y2,int z2,BlockState s,List<BlockPos> o){
+  for(int x=x1;x<=x2;x++)for(int y=y1;y<=y2;y++)for(int z=z1;z<=z2;z++){BlockPos p=new BlockPos(x,y,z);put(p,s);if(o!=null)o.add(p);}}
  public static BlockPos pad(int size,int teams,int i){int h=size/2-14;int[][]c={{-h,-h},{h,h},{-h,h},{h,-h}};int[]k=c[i%4];return Game.O.add(k[0],0,k[1]);}
  void cluster(BlockPos c,MapDef m,Map<BlockPos,BlockState> nodes,int g,int wd,int st,int f,Random r){
   int i=0;BlockState stone=Blocks.STONE.getDefaultState(),hay=Blocks.HAY_BLOCK.getDefaultState();
