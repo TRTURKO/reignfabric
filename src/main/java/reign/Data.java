@@ -1,8 +1,6 @@
 package reign;
 import net.minecraft.block.*;
 import net.minecraft.entity.EntityType;
-import net.minecraft.entity.effect.*;
-import net.minecraft.item.*;
 import net.minecraft.util.Formatting;
 public final class Data{
  public static final Formatting[] COL={Formatting.BLUE,Formatting.RED,Formatting.GREEN,Formatting.YELLOW};
@@ -17,14 +15,6 @@ public final class Data{
   END("end","End Dogumlu",1.1,1,2,Blocks.END_STONE_BRICKS,Blocks.PURPUR_BLOCK);
   public final String id,name;public final double cost,gold;public final int sup;public final BlockState wall,floor;
   Race(String i,String n,double c,double g,int s,Block w,Block f){id=i;name=n;cost=c;gold=g;sup=s;wall=w.getDefaultState();floor=f.getDefaultState();}
-  public StatusEffectInstance[] player(){return switch(this){
-   case HUMANS->new StatusEffectInstance[]{new StatusEffectInstance(StatusEffects.HASTE,-1,0,false,false)};
-   case NETHER->new StatusEffectInstance[]{new StatusEffectInstance(StatusEffects.FIRE_RESISTANCE,-1,0,false,false),new StatusEffectInstance(StatusEffects.STRENGTH,-1,0,false,false)};
-   case END->new StatusEffectInstance[]{new StatusEffectInstance(StatusEffects.SPEED,-1,0,false,false),new StatusEffectInstance(StatusEffects.SLOW_FALLING,-1,0,false,false)};};}
-  public StatusEffectInstance[] unit(){return switch(this){
-   case HUMANS->new StatusEffectInstance[]{new StatusEffectInstance(StatusEffects.RESISTANCE,-1,0,false,false)};
-   case NETHER->new StatusEffectInstance[]{new StatusEffectInstance(StatusEffects.STRENGTH,-1,0,false,false),new StatusEffectInstance(StatusEffects.ABSORPTION,-1,0,false,false)};
-   case END->new StatusEffectInstance[]{new StatusEffectInstance(StatusEffects.SPEED,-1,1,false,false)};};}
   public static Race of(String s){for(Race r:values())if(r.id.equalsIgnoreCase(s))return r;return HUMANS;}
  }
  public enum MapDef{
@@ -56,25 +46,25 @@ public final class Data{
   public int sup(){return this==CORE?10:this==HOUSE?8:0;}
   public static Build of(String s){for(Build b:values())if(b.id.equalsIgnoreCase(s))return b;return null;}
  }
- public enum Unit{
-  H1(Race.HUMANS,1,"Muhafiz",EntityType.VINDICATOR,Items.IRON_AXE,60,1,1,100,7,1.05,false),
-  H2(Race.HUMANS,2,"Okcu",EntityType.PILLAGER,Items.CROSSBOW,90,2,2,160,4,1,false),
-  H3(Race.HUMANS,3,"Demir Sovalye",EntityType.IRON_GOLEM,null,200,4,4,280,18,.85,false),
-  N1(Race.NETHER,1,"Kara Iskelet",EntityType.WITHER_SKELETON,Items.STONE_SWORD,55,1,1,100,8,1.1,false),
-  N2(Race.NETHER,2,"Alev Topu",EntityType.BLAZE,null,100,2,2,170,6,1,false),
-  N3(Race.NETHER,3,"Kusatma Canavari",EntityType.HOGLIN,null,190,4,4,270,22,1,false),
-  E1(Race.END,1,"Golge Muhafiz",EntityType.ENDERMAN,null,65,1,1,100,8,1.25,false),
-  E2(Race.END,2,"Kabuk Nisanci",EntityType.SHULKER,null,110,2,2,180,9,0,true),
-  E3(Race.END,3,"Sizici",EntityType.ENDERMITE,null,30,1,1,60,3,1.4,false);
-  public final Race race;public final int slot;public final String name;public final EntityType<?> type;public final Item weapon;
+ public enum UnitDef{
+  H1(Race.HUMANS,1,"Muhafiz",EntityType.VINDICATOR,60,1,1,100,7,1.05,false),
+  H2(Race.HUMANS,2,"Okcu",EntityType.PILLAGER,90,2,2,160,4,1,false),
+  H3(Race.HUMANS,3,"Demir Sovalye",EntityType.IRON_GOLEM,200,4,4,280,18,.85,false),
+  N1(Race.NETHER,1,"Kara Iskelet",EntityType.WITHER_SKELETON,55,1,1,100,8,1.1,false),
+  N2(Race.NETHER,2,"Alev Topu",EntityType.BLAZE,100,2,2,170,6,1,false),
+  N3(Race.NETHER,3,"Kusatma Canavari",EntityType.HOGLIN,190,4,4,270,22,1,false),
+  E1(Race.END,1,"Golge Muhafiz",EntityType.ENDERMAN,65,1,1,100,8,1.25,false),
+  E2(Race.END,2,"Kabuk Nisanci",EntityType.SHULKER,110,2,2,180,9,0,true),
+  E3(Race.END,3,"Sizici",EntityType.ENDERMITE,30,1,1,60,3,1.4,false);
+  public final Race race;public final int slot;public final String name;public final EntityType<?> type;
   public final int gold,food,sup,ticks,siege;public final double speed;public final boolean still;
-  Unit(Race r,int s,String n,EntityType<?> t,Item w,int g,int f,int su,int ti,int si,double sp,boolean st){race=r;slot=s;name=n;type=t;weapon=w;gold=g;food=f;sup=su;ticks=ti;siege=si;speed=sp;still=st;}
+  UnitDef(Race r,int s,String n,EntityType<?> t,int g,int f,int su,int ti,int si,double sp,boolean st){race=r;slot=s;name=n;type=t;gold=g;food=f;sup=su;ticks=ti;siege=si;speed=sp;still=st;}
   public Build need(){return slot==1?Build.CORE:slot==2?Build.BARRACKS:Build.SIEGE;}
-  public static Unit of(Race r,int s){for(Unit u:values())if(u.race==r&&u.slot==s)return u;return null;}
+  public static UnitDef of(Race r,int s){for(UnitDef u:values())if(u.race==r&&u.slot==s)return u;return null;}
  }
  public static final class Cfg{
   public MapDef map=MapDef.BASIN;public int size=128,teams=2;public Race[] race={Race.HUMANS,Race.NETHER,Race.END,Race.HUMANS};
   public int gold=300,wood=200,stone=150,food=20,supCap=60,unitCap=30,min=25,income=100,nodeResp=25,rad=28;
-  public boolean ff=false,pvp=true;public int rev=0;
+  public boolean ff=false,pvp=true;
  }
 }
